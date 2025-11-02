@@ -1,0 +1,58 @@
+PyCharm → GitHub Push Cheat Sheet
+1️⃣ Enable Git
+
+Menu: VCS → Enable Version Control Integration…
+
+Dialog: Select Git → Click OK
+
+✅ PyCharm will now track your files with Git.
+
+2️⃣ Add Files to Git
+
+Option 1: Right-click your project folder → Git → Add
+
+Option 2: Select files → Ctrl + Alt + A (Windows) or Cmd + Alt + A (Mac)
+
+Files are now staged for commit (green highlight).
+
+3️⃣ Commit Changes
+
+Menu: VCS → Commit… (or shortcut Ctrl + K / Cmd + K)
+
+Commit Window:
+
+Enter a commit message, e.g., Initial commit
+
+Make sure all files are checked
+
+Click Commit (or Commit and Push if you want to skip a separate push step)
+
+4️⃣ Add GitHub as Remote
+
+Menu: VCS → Git → Remotes…
+
+Dialog: Click + → Paste your GitHub repo URL
+
+https://github.com/username/YourRepoName.git
+
+
+Click OK
+
+5️⃣ Push to GitHub
+
+Menu: VCS → Git → Push…
+
+Dialog: You’ll see your branch (usually main) and the remote
+
+Click Push ✅
+
+Your project is now live on GitHub!
+
+6️⃣ Verify
+
+Open your repo in a browser:
+
+https://github.com/username/YourRepoName
+
+
+You should see your files online.

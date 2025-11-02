@@ -30,7 +30,7 @@ def main(page: ft.Page):
         filled=True,
     )
 
-    # ✅ italic live status text
+    # italic live status text
     status_text = ft.Text("", color="WHITE60", italic=True)
 
     # --- file picker ---
