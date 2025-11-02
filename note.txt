@@ -1,0 +1,181 @@
+COMMENT FOR THE vocalscribe1 APPLICATION
+
+
+import flet as ft
+import speech_recognition as sr
+import os
+import threading  # Used to run transcription in a separate thread so UI doesn't freeze
+
+def main(page: ft.Page):
+    # --- Page setup ---
+    page.title = "PROJECT"  # Window title
+    page.window.width = 600
+    page.window.height = 700
+    page.window.maximizable = False
+    page.window.resizable = False
+    page.bgcolor = "#4D0213"  # Background color
+    page.window.center()  # Center window on screen
+    page.padding = 20
+    page.vertical_alignment = ft.MainAxisAlignment.CENTER  # Center content vertically
+
+    # --- Variables ---
+    uploaded_file_path = None  # Stores the path of uploaded audio file
+
+    # Text field to display the transcribed audio
+    transcription_text = ft.TextField(
+        label="Audio Transcription",
+        multiline=True,
+        min_lines=2,
+        border_color="BROWN",
+        color="white",
+        read_only=True,  # User cannot edit this field
+        width=page.window.width - 60,
+        filled=True,
+    )
+
+    # Status text to show live updates (italic)
+    status_text = ft.Text("", color="WHITE60", italic=True)
+
+    # --- File picker logic ---
+    def upload_file_result(e: ft.FilePickerResultEvent):
+        nonlocal uploaded_file_path
+        if e.files:  # Check if user selected a file
+            uploaded_file_path = e.files[0].path  # Save file path
+            status_text.value = f"File uploaded: {os.path.basename(uploaded_file_path)}"
+        else:
+            status_text.value = "⚠️ No file selected."
+        page.update()  # Refresh UI to show changes
+
+    file_picker = ft.FilePicker(on_result=upload_file_result)
+    page.overlay.append(file_picker)  # Add file picker to overlay
+
+    # --- Transcription logic ---
+    def transcribe_audio(file_path):
+        recognizer = sr.Recognizer()  # Initialize speech recognizer
+        with sr.AudioFile(file_path) as source:  # Open audio file
+            audio_data = recognizer.record(source)  # Record entire file
+        try:
+            text = recognizer.recognize_google(audio_data)  # Convert speech to text using Google API
+            return text
+        except sr.UnknownValueError:
+            return "❌ Sorry, could not understand the audio."
+        except sr.RequestError as e:
+            return f"⚠️ Could not request results; {e}"
+
+    # Function to run transcription in a separate thread
+    def run_transcription():
+        if not uploaded_file_path:  # No file uploaded
+            transcription_text.value = "Please upload a WAV file first."
+            status_text.value = ""
+            page.update()
+            return
+
+        # Update status while transcribing
+        transcription_text.value = ""
+        status_text.value = "🎧Transcribing, please wait..."
+        page.update()
+
+        # Perform transcription
+        result = transcribe_audio(uploaded_file_path)
+
+        # Display result and update status
+        transcription_text.value = result
+        status_text.value = "Transcription complete!"
+        page.update()
+
+    # --- Button click handlers ---
+    def transcribe_clicked(e):
+        threading.Thread(target=run_transcription).start()  # Run transcription in separate thread
+
+    def download_clicked(e):
+        if transcription_text.value.strip():  # If transcription exists
+            filename = "transcription.txt"
+            try:
+                with open(filename, "w", encoding="utf-8") as f:
+                    f.write(transcription_text.value)  # Save transcription
+                page.launch_url(f"file://{os.path.abspath(filename)}")  # Open saved file
+                status_text.value = f"💾 Transcription saved and opened: {filename}!"
+            except Exception as err:
+                status_text.value = f"Error saving file!: {err}"
+        else:
+            status_text.value = "Nothing to download yet!."
+        page.update()  # Refresh UI
+
+    # --- UI Layout ---
+    page.add(
+        # App title
+        ft.Row(
+            controls=[
+                ft.Text(
+                    "🎙 VocalScribe",
+                    size=40,
+                    color=ft.Colors.WHITE60,
+                    weight=ft.FontWeight.BOLD,
+                )
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+        ),
+
+        ft.Container(height=20),  # Spacer
+
+        # Upload button
+        ft.Row(
+            controls=[
+                ft.FilledButton(
+                    text="Click Here to upload audio file",
+                    icon=ft.Icons.UPLOAD_FILE,
+                    bgcolor="#9d806c",
+                    color="#320010",
+                    height=60,
+                    width=page.window.width - 60,
+                    on_click=lambda _: file_picker.pick_files(
+                        allow_multiple=False,
+                        allowed_extensions=["wav", "mp3", "flac"]
+                    )
+                )
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+        ),
+
+        ft.Container(height=20),  # Spacer
+
+        # Transcription text field
+        ft.Row(
+            controls=[transcription_text],
+            alignment=ft.MainAxisAlignment.CENTER,
+        ),
+
+        ft.Container(height=25),  # Spacer
+
+        # Action buttons
+        ft.Row(
+            controls=[
+                ft.FilledButton(
+                    text="Transcribe",
+                    icon=ft.Icons.TEXT_SNIPPET,
+                    on_click=transcribe_clicked,
+                    bgcolor="#9d806c",
+                    color="#320010",
+                ),
+                ft.FilledButton(
+                    text="Download as .TXT",
+                    icon=ft.Icons.DOWNLOAD,
+                    on_click=download_clicked,
+                    bgcolor="#9d806c",
+                    color="#320010",
+                ),
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+        ),
+
+        ft.Container(height=15),  # Spacer
+
+        # Status text
+        ft.Row(
+            controls=[status_text],
+            alignment=ft.MainAxisAlignment.CENTER,
+        ),
+    )
+
+# Run the app
+ft.app(main)
